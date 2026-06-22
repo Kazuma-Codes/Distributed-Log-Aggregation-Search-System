@@ -110,8 +110,5 @@ We utilize a three-tier architecture to balance performance and costs:
 └── scripts/         # Helper scripts
 ```
 
-## Contributing
-Please see `CONTRIBUTING.md` for guidelines. We use PRs and require all tests to pass in CI.
-
 ## License
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full text.
