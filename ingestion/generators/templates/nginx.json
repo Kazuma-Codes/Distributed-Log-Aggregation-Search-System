@@ -1,0 +1,61 @@
+{
+  "_description": "Nginx access-log template — fields and example values",
+  "schema": {
+    "remote_addr": {
+      "type": "string",
+      "description": "Client IP address",
+      "example": "192.168.1.42"
+    },
+    "remote_user": {
+      "type": "string",
+      "description": "Authenticated user (or '-')",
+      "example": "-"
+    },
+    "time_local": {
+      "type": "string",
+      "description": "Timestamp in common log format",
+      "example": "23/Jun/2026:00:28:57 +0530"
+    },
+    "request": {
+      "type": "string",
+      "description": "Full HTTP request line",
+      "example": "GET /api/v1/users HTTP/1.1"
+    },
+    "status": {
+      "type": "integer",
+      "description": "HTTP response status code",
+      "example": 200
+    },
+    "body_bytes_sent": {
+      "type": "integer",
+      "description": "Response body size in bytes",
+      "example": 1024
+    },
+    "http_referer": {
+      "type": "string",
+      "description": "HTTP Referer header",
+      "example": "https://example.com/dashboard"
+    },
+    "http_user_agent": {
+      "type": "string",
+      "description": "Client User-Agent string",
+      "example": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+    },
+    "request_time": {
+      "type": "float",
+      "description": "Request processing time in seconds",
+      "example": 0.042
+    }
+  },
+  "example": {
+    "remote_addr": "10.0.12.7",
+    "remote_user": "-",
+    "time_local": "23/Jun/2026:00:28:57 +0530",
+    "request": "POST /api/v1/orders HTTP/1.1",
+    "status": 201,
+    "body_bytes_sent": 512,
+    "http_referer": "https://shop.example.com/checkout",
+    "http_user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+    "request_time": 0.153
+  }
+}

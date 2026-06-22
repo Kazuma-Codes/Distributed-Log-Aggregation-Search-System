@@ -1,0 +1,156 @@
+# =============================================================================
+# Vector Pipeline Configuration — Kubernetes-Specific
+# Distributed Log Aggregation & Search System
+# =============================================================================
+# Specialised configuration for running Vector as a DaemonSet inside K8s.
+# Only the kubernetes_logs source is used; enrichment relies on pod metadata.
+# =============================================================================
+
+data_dir: /var/lib/vector
+
+# ---------------------------------------------------------------------------
+# Sources
+# ---------------------------------------------------------------------------
+sources:
+  k8s_logs:
+    type: kubernetes_logs
+    auto_partial_merge: true
+    self_node_name: "${VECTOR_SELF_NODE_NAME}"
+
+    # --- Pod annotation fields -----------------------------------------------
+    pod_annotation_fields:
+      container_image: "container_image"
+      container_name: "container_name"
+      pod_labels: "pod_labels"
+      pod_name: "pod_name"
+      pod_namespace: "pod_namespace"
+      pod_uid: "pod_uid"
+      pod_ip: "pod_ip"
+      pod_node_name: "pod_node_name"
+
+    # --- Namespace filtering (include only app namespaces) -------------------
+    extra_namespace_label_selector: "logging=enabled"
+    extra_label_selector: "app.kubernetes.io/part-of=log-platform"
+
+# ---------------------------------------------------------------------------
+# Transforms
+# ---------------------------------------------------------------------------
+transforms:
+  extract_k8s_metadata:
+    type: remap
+    inputs:
+      - k8s_logs
+    source: |-
+      # --- Flatten Kubernetes metadata into top-level fields ------------------
+      .namespace  = .kubernetes.pod_namespace  ?? "default"
+      .pod_name   = .kubernetes.pod_name       ?? "unknown"
+      .pod_ip     = .kubernetes.pod_ip         ?? ""
+      .node_name  = .kubernetes.pod_node_name  ?? ""
+      .container  = .kubernetes.container_name ?? ""
+
+      # --- Service name from well-known labels --------------------------------
+      .service = .kubernetes.pod_labels."app.kubernetes.io/name" ??
+                 .kubernetes.pod_labels.app ??
+                 .kubernetes.pod_labels."k8s-app" ??
+                 .container
+
+      # --- Version / component ------------------------------------------------
+      .version   = .kubernetes.pod_labels."app.kubernetes.io/version"   ?? "unknown"
+      .component = .kubernetes.pod_labels."app.kubernetes.io/component" ?? "unknown"
+
+  parse_logs:
+    type: remap
+    inputs:
+      - extract_k8s_metadata
+    source: |-
+      .timestamp = to_timestamp!(parse_timestamp(.timestamp ?? to_string(now()), "%+"))
+      .level     = downcase(.level ?? .severity ?? "info")
+      .message   = to_string(.message ?? "")
+
+      if exists(.http_status) {
+        .http_status = to_int!(.http_status)
+      }
+      if exists(.duration_ms) {
+        .duration_ms = to_float!(.duration_ms)
+      }
+
+      .log_id = uuid_v4()
+
+  enrich_logs:
+    type: remap
+    inputs:
+      - parse_logs
+    source: |-
+      .environment  = .env ?? "production"
+      del(.env)
+      .datacenter   = .dc ?? "dc1"
+      del(.dc)
+      ._processed_at = now()
+
+  handle_backpressure:
+    type: sample
+    inputs:
+      - enrich_logs
+    rate: 10
+    key_field: "service"
+
+  route_by_level:
+    type: route
+    inputs:
+      - enrich_logs
+    route:
+      high_priority: '.level == "error" || .level == "critical"'
+      medium: '.level == "warn" || .level == "warning"'
+      standard: '.level == "info" || .level == "debug" || .level == "trace"'
+
+# ---------------------------------------------------------------------------
+# Sinks
+# ---------------------------------------------------------------------------
+sinks:
+  kafka:
+    type: kafka
+    inputs:
+      - enrich_logs
+    bootstrap_servers: "log-kafka-kafka-bootstrap:9092"
+    topic: "logs-{{ service }}"
+    encoding:
+      codec: json
+    buffer:
+      type: memory
+      max_events: 100000
+      when_full: drop_newest
+    healthcheck:
+      enabled: true
+    compression: gzip
+
+  kafka_high_priority:
+    type: kafka
+    inputs:
+      - "route_by_level.high_priority"
+    bootstrap_servers: "log-kafka-kafka-bootstrap:9092"
+    topic: "logs-priority"
+    encoding:
+      codec: json
+    buffer:
+      type: memory
+      max_events: 100000
+      when_full: drop_newest
+    healthcheck:
+      enabled: true
+    compression: gzip
+    acknowledgements:
+      enabled: true
+
+  disk_fallback:
+    type: file
+    inputs:
+      - enrich_logs
+    path: "/tmp/vector-fallback/%Y/%m/%d/%H.log"
+    encoding:
+      codec: json
+
+  internal_metrics:
+    type: prometheus_exporter
+    inputs:
+      - internal_metrics
+    address: "0.0.0.0:9598"

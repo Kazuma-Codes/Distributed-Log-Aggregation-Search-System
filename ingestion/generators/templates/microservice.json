@@ -1,0 +1,107 @@
+{
+  "_description": "Microservice log template — full distributed-tracing & HTTP fields",
+  "schema": {
+    "timestamp": {
+      "type": "string",
+      "description": "ISO-8601 timestamp",
+      "example": "2026-06-23T00:28:57.123Z"
+    },
+    "level": {
+      "type": "string",
+      "description": "Log severity level",
+      "enum": ["debug", "info", "warn", "error", "critical"],
+      "example": "info"
+    },
+    "service": {
+      "type": "string",
+      "description": "Originating microservice name",
+      "example": "order-service"
+    },
+    "instance_id": {
+      "type": "string",
+      "description": "Unique instance / pod identifier",
+      "example": "order-service-6f8b9c-xz4kq"
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable log message",
+      "example": "Order created successfully"
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Distributed trace ID (UUID v4)",
+      "example": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "span_id": {
+      "type": "string",
+      "description": "Current span identifier (16-char hex)",
+      "example": "abcdef1234567890"
+    },
+    "parent_span_id": {
+      "type": "string",
+      "description": "Parent span identifier (16-char hex, may be null for root)",
+      "example": "1234567890abcdef",
+      "optional": true
+    },
+    "http_method": {
+      "type": "string",
+      "description": "HTTP method",
+      "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      "example": "POST"
+    },
+    "http_path": {
+      "type": "string",
+      "description": "Request path",
+      "example": "/api/v1/orders"
+    },
+    "http_status": {
+      "type": "integer",
+      "description": "HTTP response status code",
+      "example": 201
+    },
+    "duration_ms": {
+      "type": "float",
+      "description": "Request duration in milliseconds",
+      "example": 87.3
+    },
+    "request_size": {
+      "type": "integer",
+      "description": "Request body size in bytes",
+      "example": 256
+    },
+    "response_size": {
+      "type": "integer",
+      "description": "Response body size in bytes",
+      "example": 1024
+    },
+    "user_id": {
+      "type": "string",
+      "description": "Authenticated user ID (may be null for unauthenticated)",
+      "example": "usr_8f3a2b1c",
+      "optional": true
+    },
+    "correlation_id": {
+      "type": "string",
+      "description": "Cross-service correlation ID",
+      "example": "corr-9e7d6c5b-4a3f-2e1d"
+    }
+  },
+  "example": {
+    "timestamp": "2026-06-23T00:28:57.123Z",
+    "level": "info",
+    "service": "order-service",
+    "instance_id": "order-service-6f8b9c-xz4kq",
+    "message": "Order ORD-20260623-0042 created for user usr_8f3a2b1c",
+    "trace_id": "550e8400-e29b-41d4-a716-446655440000",
+    "span_id": "abcdef1234567890",
+    "parent_span_id": "1234567890abcdef",
+    "http_method": "POST",
+    "http_path": "/api/v1/orders",
+    "http_status": 201,
+    "duration_ms": 87.3,
+    "request_size": 256,
+    "response_size": 1024,
+    "user_id": "usr_8f3a2b1c",
+    "correlation_id": "corr-9e7d6c5b-4a3f-2e1d"
+  }
+}

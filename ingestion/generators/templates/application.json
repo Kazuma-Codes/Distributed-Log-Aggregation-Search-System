@@ -1,0 +1,64 @@
+{
+  "_description": "Application log template — generic service log format",
+  "schema": {
+    "timestamp": {
+      "type": "string",
+      "description": "ISO-8601 timestamp",
+      "example": "2026-06-23T00:28:57.123Z"
+    },
+    "level": {
+      "type": "string",
+      "description": "Log severity level",
+      "enum": ["debug", "info", "warn", "error", "critical"],
+      "example": "info"
+    },
+    "service": {
+      "type": "string",
+      "description": "Originating service name",
+      "example": "user-service"
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable log message",
+      "example": "User authentication succeeded"
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Distributed trace ID (UUID v4)",
+      "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    },
+    "span_id": {
+      "type": "string",
+      "description": "Span identifier within the trace",
+      "example": "abcdef1234567890"
+    },
+    "duration_ms": {
+      "type": "float",
+      "description": "Request / operation duration in milliseconds",
+      "example": 142.7
+    },
+    "error_code": {
+      "type": "string",
+      "description": "Application error code (present only on error/critical)",
+      "example": "ERR_DB_CONN_TIMEOUT",
+      "optional": true
+    },
+    "stack_trace": {
+      "type": "string",
+      "description": "Stack trace (present only on error/critical)",
+      "example": "Traceback (most recent call last):\n  File \"app.py\", line 42 ...",
+      "optional": true
+    }
+  },
+  "example": {
+    "timestamp": "2026-06-23T00:28:57.123Z",
+    "level": "error",
+    "service": "payment-service",
+    "message": "Failed to process payment: connection refused",
+    "trace_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "span_id": "abcdef1234567890",
+    "duration_ms": 5023.4,
+    "error_code": "ERR_PAYMENT_GATEWAY",
+    "stack_trace": "Traceback (most recent call last):\n  File \"payment.py\", line 87, in process\n    raise ConnectionError('Gateway unreachable')"
+  }
+}

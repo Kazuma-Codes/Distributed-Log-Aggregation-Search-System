@@ -1,0 +1,531 @@
+{
+  "uid": "system-health",
+  "title": "System Health",
+  "schemaVersion": 38,
+  "style": "dark",
+  "refresh": "10s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Overview",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "System Status",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 2,
+      "description": "Overall system health",
+      "targets": [
+        {
+          "expr": "up"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Kafka Consumer Lag",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 3,
+      "description": "Max consumer lag",
+      "targets": [
+        {
+          "expr": "max(kafka_consumergroup_lag)"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "ClickHouse Query Rate",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 4,
+      "description": "ClickHouse queries per second",
+      "targets": [
+        {
+          "expr": "rate(clickhouse_queries_total[1m])"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Vector Events/sec",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 5,
+      "description": "Vector events processed per second",
+      "targets": [
+        {
+          "expr": "rate(vector_events_in_total[1m])"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Kafka",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "id": 6
+    },
+    {
+      "type": "stat",
+      "title": "Kafka Broker Status",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 4,
+        "h": 8
+      },
+      "id": 7,
+      "description": "Broker health",
+      "targets": [
+        {
+          "expr": "kafka_server_brokertopicmetrics_messagesin_total"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Topic Partition Distribution",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 6,
+        "w": 6,
+        "h": 8
+      },
+      "id": 8,
+      "description": "Partitions per topic",
+      "targets": [
+        {
+          "expr": "kafka_topic_partitions"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Consumer Group Lag Over Time",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 10,
+        "y": 6,
+        "w": 7,
+        "h": 8
+      },
+      "id": 9,
+      "description": "Lag over time",
+      "targets": [
+        {
+          "expr": "kafka_consumergroup_lag"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Messages In/Out Rate",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 17,
+        "y": 6,
+        "w": 7,
+        "h": 8
+      },
+      "id": 10,
+      "description": "Messages per second",
+      "targets": [
+        {
+          "expr": "rate(kafka_server_brokertopicmetrics_messagesin_total[1m])"
+        },
+        {
+          "expr": "rate(kafka_server_brokertopicmetrics_bytesout_total[1m])"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "ClickHouse",
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 1
+      },
+      "id": 11
+    },
+    {
+      "type": "timeseries",
+      "title": "Active Queries",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 4,
+        "h": 8
+      },
+      "id": 12,
+      "description": "Currently active queries",
+      "targets": [
+        {
+          "expr": "clickhouse_active_queries"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Merge Operations",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 15,
+        "w": 4,
+        "h": 8
+      },
+      "id": 13,
+      "description": "Active merges",
+      "targets": [
+        {
+          "expr": "clickhouse_merge_active"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Disk Usage by Table",
+      "datasource": {
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 15,
+        "w": 8,
+        "h": 8
+      },
+      "id": 14,
+      "description": "Disk space used per table",
+      "targets": [
+        {
+          "query": "SELECT table, sum(bytes) as disk_usage FROM system.parts WHERE active GROUP BY table"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Insert Rate",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 15,
+        "w": 4,
+        "h": 8
+      },
+      "id": 15,
+      "description": "Inserts per second",
+      "targets": [
+        {
+          "expr": "rate(clickhouse_inserted_rows_total[1m])"
+        }
+      ]
+    },
+    {
+      "type": "histogram",
+      "title": "Query Duration",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 15,
+        "w": 4,
+        "h": 8
+      },
+      "id": 16,
+      "description": "Query latency distribution",
+      "targets": [
+        {
+          "expr": "sum(rate(clickhouse_query_duration_bucket[5m])) by (le)"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Vector",
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 24,
+        "h": 1
+      },
+      "id": 17
+    },
+    {
+      "type": "timeseries",
+      "title": "Events In/Out Rate",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 8,
+        "h": 8
+      },
+      "id": 18,
+      "description": "Vector throughput",
+      "targets": [
+        {
+          "expr": "rate(vector_events_in_total[1m])"
+        },
+        {
+          "expr": "rate(vector_events_out_total[1m])"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Buffer Usage",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 24,
+        "w": 8,
+        "h": 8
+      },
+      "id": 19,
+      "description": "Vector internal buffer usage",
+      "targets": [
+        {
+          "expr": "vector_buffer_byte_size"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Errors",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 24,
+        "w": 8,
+        "h": 8
+      },
+      "id": 20,
+      "description": "Vector errors",
+      "targets": [
+        {
+          "expr": "rate(vector_component_errors_total[1m])"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "MinIO",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 24,
+        "h": 1
+      },
+      "id": 21
+    },
+    {
+      "type": "stat",
+      "title": "Disk Usage",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 8,
+        "h": 8
+      },
+      "id": 22,
+      "description": "MinIO disk usage",
+      "targets": [
+        {
+          "expr": "minio_disk_storage_used_bytes"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Object Count",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 33,
+        "w": 8,
+        "h": 8
+      },
+      "id": 23,
+      "description": "Total objects",
+      "targets": [
+        {
+          "expr": "minio_cluster_objects_total"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Request Rate",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 33,
+        "w": 8,
+        "h": 8
+      },
+      "id": 24,
+      "description": "S3 operations per second",
+      "targets": [
+        {
+          "expr": "rate(minio_s3_requests_total[1m])"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Infrastructure",
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 24,
+        "h": 1
+      },
+      "id": 25
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU Usage",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 8,
+        "h": 8
+      },
+      "id": 26,
+      "description": "CPU per component",
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total[1m])"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory Usage",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 42,
+        "w": 8,
+        "h": 8
+      },
+      "id": 27,
+      "description": "RAM per component",
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Network I/O",
+      "datasource": {
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 42,
+        "w": 8,
+        "h": 8
+      },
+      "id": 28,
+      "description": "Network traffic",
+      "targets": [
+        {
+          "expr": "rate(node_network_receive_bytes_total[1m])"
+        },
+        {
+          "expr": "rate(node_network_transmit_bytes_total[1m])"
+        }
+      ]
+    }
+  ]
+}

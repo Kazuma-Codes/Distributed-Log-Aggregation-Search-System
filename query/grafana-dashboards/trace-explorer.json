@@ -1,0 +1,195 @@
+{
+  "uid": "trace-explorer",
+  "title": "Trace Explorer",
+  "schemaVersion": 38,
+  "style": "dark",
+  "refresh": "10s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "trace_id",
+        "type": "textbox",
+        "query": ""
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Trace Info",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Trace ID",
+      "datasource": {
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 2,
+      "description": "Selected Trace ID",
+      "targets": [
+        {
+          "query": "SELECT '$trace_id'"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total Spans",
+      "datasource": {
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 3,
+      "description": "Number of spans in trace",
+      "targets": [
+        {
+          "query": "SELECT count() FROM default.logs WHERE trace_id='$trace_id'"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Services Involved",
+      "datasource": {
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 4,
+      "description": "Distinct services in trace",
+      "targets": [
+        {
+          "query": "SELECT count(distinct service) FROM default.logs WHERE trace_id='$trace_id'"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total Duration (ms)",
+      "datasource": {
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "id": 5,
+      "description": "Total duration of the trace",
+      "targets": [
+        {
+          "query": "SELECT max(timestamp) - min(timestamp) as duration FROM default.logs WHERE trace_id='$trace_id'"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Trace Timeline",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "id": 6
+    },
+    {
+      "type": "table",
+      "title": "Spans Timeline",
+      "datasource": {
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 24,
+        "h": 8
+      },
+      "id": 7,
+      "description": "All spans ordered by timestamp",
+      "targets": [
+        {
+          "query": "SELECT timestamp, service, message, duration_ms, http_status FROM default.logs WHERE trace_id='$trace_id' ORDER BY timestamp ASC"
+        }
+      ]
+    },
+    {
+      "type": "state-timeline",
+      "title": "Visual Timeline",
+      "datasource": {
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 8
+      },
+      "id": 8,
+      "description": "State timeline visualization",
+      "targets": [
+        {
+          "query": "SELECT timestamp, service, duration_ms FROM default.logs WHERE trace_id='$trace_id' ORDER BY timestamp ASC"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Trace Search",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 1
+      },
+      "id": 9
+    },
+    {
+      "type": "table",
+      "title": "Trace Search Results",
+      "datasource": {
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 24,
+        "h": 8
+      },
+      "id": 10,
+      "description": "Search traces by ID, service, time",
+      "targets": [
+        {
+          "query": "SELECT trace_id, count() as spans, min(timestamp) as start_time, max(timestamp) as end_time, groupArray(distinct service) as services FROM default.logs WHERE $__timeFilter(timestamp) GROUP BY trace_id ORDER BY start_time DESC LIMIT 100"
+        }
+      ]
+    }
+  ]
+}

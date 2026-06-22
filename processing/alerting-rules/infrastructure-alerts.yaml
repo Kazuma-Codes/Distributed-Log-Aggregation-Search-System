@@ -1,0 +1,70 @@
+groups:
+- name: infrastructure-alerts
+  rules:
+  - alert: KafkaConsumerLagHigh
+    expr: kafka_consumergroup_lag > 10000
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Kafka consumer lag is high
+      description: Consumer lag is > 10000 for 5 minutes.
+  - alert: KafkaBrokerDown
+    expr: sum(up{job="kafka"}) < 3
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: Kafka broker count < 3
+      description: Less than 3 Kafka brokers are available.
+  - alert: ClickHouseDiskUsageHigh
+    expr: (sum(clickhouse_disk_usage_bytes) / sum(clickhouse_disk_capacity_bytes))
+      > 0.80
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: ClickHouse disk usage > 80%
+      description: ClickHouse nodes are running out of disk space.
+  - alert: ClickHouseSlowQueries
+    expr: histogram_quantile(0.99, sum(rate(clickhouse_query_duration_bucket[5m]))
+      by (le)) > 10
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: ClickHouse queries are slow
+      description: p99 query duration is > 10s for 5m.
+  - alert: VectorBufferFull
+    expr: (vector_buffer_byte_size / vector_buffer_max_byte_size) > 0.90
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Vector buffer is > 90% full
+      description: Vector is struggling to flush events.
+  - alert: VectorSinkErrors
+    expr: rate(vector_sink_errors_total[5m]) > 0
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Vector is experiencing sink errors
+      description: Vector failed to send events to destination.
+  - alert: MinIODiskUsageHigh
+    expr: (minio_disk_storage_used_bytes / minio_disk_storage_capacity_bytes) > 0.85
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: MinIO disk usage > 85%
+      description: MinIO cluster is running out of space.
+  - alert: HighMemoryUsage
+    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes
+      > 0.90
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High memory usage detected on node
+      description: Node memory usage > 90% for 5m.

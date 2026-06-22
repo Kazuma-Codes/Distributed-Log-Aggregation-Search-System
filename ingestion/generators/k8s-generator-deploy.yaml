@@ -1,0 +1,78 @@
+# =============================================================================
+# Log Generator — Kubernetes Deployment
+# Distributed Log Aggregation & Search System
+# =============================================================================
+# Deploys 3 replicas of the log generator simulating multiple microservices.
+# Configuration is externalised into a ConfigMap.
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log-generator-config
+  namespace: log-platform
+  labels:
+    app.kubernetes.io/name: log-generator
+    app.kubernetes.io/part-of: log-platform
+    app.kubernetes.io/component: testing
+data:
+  # Generator settings (consumed as CLI args via the Deployment)
+  GENERATOR_RATE: "1000"
+  GENERATOR_FORMAT: "microservice"
+  GENERATOR_OUTPUT: "kafka"
+  GENERATOR_KAFKA_BROKERS: "log-kafka-kafka-bootstrap:9092"
+  GENERATOR_KAFKA_TOPIC_PREFIX: "logs"
+  GENERATOR_THREADS: "4"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-generator
+  namespace: log-platform
+  labels:
+    app.kubernetes.io/name: log-generator
+    app.kubernetes.io/part-of: log-platform
+    app.kubernetes.io/component: testing
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: log-generator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: log-generator
+        app.kubernetes.io/part-of: log-platform
+        app.kubernetes.io/component: testing
+      annotations:
+        prometheus.io/scrape: "false"
+    spec:
+      terminationGracePeriodSeconds: 15
+      containers:
+        - name: log-generator
+          image: log-platform/log-generator:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--rate"
+            - "$(GENERATOR_RATE)"
+            - "--format"
+            - "$(GENERATOR_FORMAT)"
+            - "--output"
+            - "$(GENERATOR_OUTPUT)"
+            - "--kafka-brokers"
+            - "$(GENERATOR_KAFKA_BROKERS)"
+            - "--kafka-topic-prefix"
+            - "$(GENERATOR_KAFKA_TOPIC_PREFIX)"
+            - "--threads"
+            - "$(GENERATOR_THREADS)"
+          envFrom:
+            - configMapRef:
+                name: log-generator-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      restartPolicy: Always

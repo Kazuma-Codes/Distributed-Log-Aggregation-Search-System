@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: log-platform
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: log-platform
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: ClickHouse
+        type: grafana-clickhouse-datasource
+        url: http://chi-log-clickhouse-logs-0-0.log-platform.svc:8123
+        access: proxy
+        isDefault: true
+        jsonData:
+          defaultDatabase: default
+          username: default
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus.log-platform.svc:9090
+        access: proxy

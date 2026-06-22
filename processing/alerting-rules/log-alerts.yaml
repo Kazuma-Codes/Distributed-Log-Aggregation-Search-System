@@ -1,0 +1,39 @@
+groups:
+- name: log-alerts
+  rules:
+  - alert: HighErrorRate
+    expr: (sum(rate(log_errors_total[5m])) by (service) / sum(rate(logs_total[5m]))
+      by (service)) > 0.05
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: High error rate detected in service {{ $labels.service }}
+      description: Error rate is > 5% for the last 2 minutes.
+      runbook_url: https://wiki.internal/runbooks/high_error_rate
+  - alert: ErrorSpike
+    expr: sum(rate(log_errors_total[5m])) by (service) > (sum(rate(log_errors_total[1h]))
+      by (service) * 3)
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: Error spike detected in service {{ $labels.service }}
+      description: Error rate in the last 5 minutes is 3x higher than the 1h average.
+  - alert: NoLogsReceived
+    expr: sum(rate(logs_total[5m])) == 0
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: No logs received in the last 5 minutes
+      description: The logging pipeline may be broken or all services are down.
+  - alert: LogVolumeAnomaly
+    expr: abs(sum(rate(logs_total[5m])) by (service) - avg_over_time(sum(rate(logs_total[1h]))
+      by (service)[1h:])) > (3 * stddev_over_time(sum(rate(logs_total[1h])) by (service)[1h:]))
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: Abnormal log volume detected in service {{ $labels.service }}
+      description: Log volume deviated by > 3 stddev from the rolling mean.

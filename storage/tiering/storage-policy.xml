@@ -1,0 +1,49 @@
+<!-- 
+ClickHouse tiered storage configuration.
+Design decisions:
+1. Three tiers: hot (local disk), warm (S3), cold (S3).
+2. Uses S3 endpoints on MinIO for cost-effective object storage of older logs.
+-->
+<clickhouse>
+  <storage_configuration>
+    <disks>
+      <!-- Local disk for hot data -->
+      <default/>
+      
+      <!-- S3 disk for warm data -->
+      <warm_s3>
+        <type>s3</type>
+        <endpoint>http://minio:9000/logs-warm/</endpoint>
+        <access_key_id>minioadmin</access_key_id>
+        <secret_access_key>minioadmin</secret_access_key>
+      </warm_s3>
+      
+      <!-- S3 disk for cold data -->
+      <cold_s3>
+        <type>s3</type>
+        <endpoint>http://minio:9000/logs-cold/</endpoint>
+        <access_key_id>minioadmin</access_key_id>
+        <secret_access_key>minioadmin</secret_access_key>
+      </cold_s3>
+    </disks>
+    
+    <policies>
+      <tiered>
+        <volumes>
+          <!-- Highest priority volume, written to first -->
+          <hot>
+            <disk>default</disk>
+          </hot>
+          <!-- Second volume, used by TTL movement or when hot is full -->
+          <warm>
+            <disk>warm_s3</disk>
+          </warm>
+          <!-- Third volume, used by TTL movement for long-term archiving -->
+          <cold>
+            <disk>cold_s3</disk>
+          </cold>
+        </volumes>
+      </tiered>
+    </policies>
+  </storage_configuration>
+</clickhouse>

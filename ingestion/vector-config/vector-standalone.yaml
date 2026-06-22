@@ -1,0 +1,100 @@
+# =============================================================================
+# Vector Pipeline Configuration — Standalone / Testing
+# Distributed Log Aggregation & Search System
+# =============================================================================
+# No external dependencies (no Kafka).
+# Sources: stdin (manual paste) + demo_logs (auto-generated syslog lines).
+# Sinks: console (stdout) + file.
+# =============================================================================
+
+data_dir: /tmp/vector-standalone
+
+# ---------------------------------------------------------------------------
+# Sources
+# ---------------------------------------------------------------------------
+sources:
+  stdin_source:
+    type: stdin
+    decoding:
+      codec: json
+
+  demo_logs:
+    type: demo_logs
+    format: syslog
+    interval: 0.1   # ~10 events / second
+
+# ---------------------------------------------------------------------------
+# Transforms (mirror the main pipeline)
+# ---------------------------------------------------------------------------
+transforms:
+  parse_logs:
+    type: remap
+    inputs:
+      - stdin_source
+      - demo_logs
+    source: |-
+      .timestamp = to_timestamp!(parse_timestamp(.timestamp ?? to_string(now()), "%+"))
+
+      .service = .kubernetes.pod_labels."app.kubernetes.io/name" ??
+                 .kubernetes.pod_labels.app ??
+                 .service ??
+                 .appname ??
+                 "unknown"
+
+      .level   = downcase(.level ?? .severity ?? "info")
+      .message = to_string(.message ?? "")
+
+      if exists(.http_status) {
+        .http_status = to_int!(.http_status)
+      }
+      if exists(.duration_ms) {
+        .duration_ms = to_float!(.duration_ms)
+      }
+
+      .log_id = uuid_v4()
+
+  enrich_logs:
+    type: remap
+    inputs:
+      - parse_logs
+    source: |-
+      .environment   = .env ?? "development"
+      del(.env)
+      .datacenter    = .dc ?? "local"
+      del(.dc)
+      ._processed_at = now()
+
+  handle_backpressure:
+    type: sample
+    inputs:
+      - enrich_logs
+    rate: 10
+    key_field: "service"
+
+  route_by_level:
+    type: route
+    inputs:
+      - enrich_logs
+    route:
+      high_priority: '.level == "error" || .level == "critical"'
+      medium: '.level == "warn" || .level == "warning"'
+      standard: '.level == "info" || .level == "debug" || .level == "trace"'
+
+# ---------------------------------------------------------------------------
+# Sinks
+# ---------------------------------------------------------------------------
+sinks:
+  console_out:
+    type: console
+    inputs:
+      - enrich_logs
+    encoding:
+      codec: json
+
+  file_out:
+    type: file
+    inputs:
+      - enrich_logs
+    path: "/tmp/vector-standalone/output/%Y-%m-%d.log"
+    encoding:
+      codec: json

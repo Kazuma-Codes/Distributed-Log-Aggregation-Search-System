@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-config
+  namespace: log-platform
+  labels:
+    app.kubernetes.io/name: vector
+    app.kubernetes.io/component: log-collector
+    app.kubernetes.io/part-of: log-platform
+data:
+  vector.yaml: |
+    # Reference to the config from ingestion/vector-config/vector.yaml
+    sources:
+      kubernetes_logs:
+        type: kubernetes_logs
+      syslog_input:
+        type: syslog
+        address: 0.0.0.0:5140
+        mode: tcp
+    transforms:
+      kubernetes_parse:
+        type: remap
+        inputs: ["kubernetes_logs"]
+        source: |
+          . = merge(., parse_json!(.message) ?? {})
+    sinks:
+      kafka_sink:
+        type: kafka
+        inputs: ["kubernetes_parse", "syslog_input"]
+        bootstrap_servers: log-kafka-kafka-bootstrap.log-platform.svc:9092
+        topic: "{{ '{{' }} metadata.topic {{ '}}' }}"
+        encoding:
+          codec: json

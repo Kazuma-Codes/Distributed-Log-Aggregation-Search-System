@@ -1,0 +1,45 @@
+groups:
+- name: slo-alerts
+  rules:
+  - alert: IngestionLatencySLO
+    expr: histogram_quantile(0.99, sum(rate(log_ingestion_latency_seconds_bucket[5m]))
+      by (le)) > 5
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: Ingestion latency SLO violated
+      description: p99 ingestion latency > 5s.
+  - alert: QueryLatencySLO
+    expr: histogram_quantile(0.99, sum(rate(query_latency_bucket[5m])) by (le)) >
+      2
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: Query latency SLO violated
+      description: p99 query latency > 2s.
+  - alert: AvailabilitySLO
+    expr: avg_over_time(up{job=~"clickhouse|kafka|vector"}[30d]) < 0.999
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: Platform availability SLO violated
+      description: Uptime < 99.9% over 30d rolling window.
+  - alert: DataDurabilitySLO
+    expr: rate(log_data_loss_events_total[5m]) > 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: Data loss detected
+      description: Data loss events reported.
+  - alert: ErrorBudgetBurn
+    expr: (rate(log_errors_total[1h]) / rate(logs_total[1h])) > 0.05
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: High error budget burn rate
+      description: Fast burn rate over 1h.

@@ -1,0 +1,30 @@
+flowchart TD
+    subgraph Ingestion
+        A1[Microservice A] -->|JSON Logs| V1(Vector Agent)
+        A2[Microservice B] -->|JSON Logs| V2(Vector Agent)
+    end
+
+    subgraph Buffering
+        V1 -->|TCP/HTTP| K1(Kafka Topic: logs)
+        V2 -->|TCP/HTTP| K1
+    end
+
+    subgraph Storage & Analytics
+        K1 -->|ClickHouse Kafka Engine| CH_HOT[(ClickHouse\nHot Storage\nLocal NVMe)]
+        CH_HOT -.->|TTL > 7 days| MINIO_WARM[(MinIO\nWarm Storage\nS3 Standard)]
+        MINIO_WARM -.->|TTL > 90 days| MINIO_COLD[(MinIO\nCold Storage\nS3 Glacier)]
+    end
+
+    subgraph Querying & Presentation
+        API(Go Query API) -->|SQL| CH_HOT
+        GRAFANA(Grafana) -->|ClickHouse Plugin| CH_HOT
+        USER((User)) --> API
+        USER --> GRAFANA
+    end
+
+    subgraph Observability
+        PROM(Prometheus) -->|Scrape| V1
+        PROM -->|Scrape| K1
+        PROM -->|Scrape| CH_HOT
+        GRAFANA --> PROM
+    end

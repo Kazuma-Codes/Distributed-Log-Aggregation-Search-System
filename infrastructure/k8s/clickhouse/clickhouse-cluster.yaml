@@ -1,0 +1,54 @@
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseInstallation
+metadata:
+  name: log-clickhouse
+  namespace: log-platform
+  labels:
+    app.kubernetes.io/name: clickhouse
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: log-platform
+spec:
+  defaults:
+    templates:
+      podTemplate: pod-template
+      dataVolumeClaimTemplate: data-volume
+  configuration:
+    clusters:
+      - name: logs
+        layout:
+          shardsCount: 2
+          replicasCount: 2
+    users:
+      default/password: "default_password"
+      default/networks/ip: "0.0.0.0/0"
+      default/profile: "default"
+      readonly/password: "readonly_password"
+      readonly/profile: "readonly"
+    profiles:
+      default/merge_tree/max_bytes_to_merge_at_min_space_in_pool: 104857600
+      readonly/readonly: 1
+    settings:
+      logger/level: "information"
+      logger/console: 1
+  templates:
+    podTemplates:
+      - name: pod-template
+        spec:
+          containers:
+            - name: clickhouse
+              image: clickhouse/clickhouse-server:latest
+              resources:
+                requests:
+                  memory: 2Gi
+                  cpu: 1000m
+                limits:
+                  memory: 4Gi
+                  cpu: 2000m
+    volumeClaimTemplates:
+      - name: data-volume
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 100Gi
